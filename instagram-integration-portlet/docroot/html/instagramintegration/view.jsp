@@ -1,3 +1,4 @@
+
 <%@page import="com.smartechz.tools.mygeoloc.Geobytes"%>
 <%@page import="com.sola.instagram.util.PaginatedCollection"%>
 <%@page import="com.sola.instagram.model.Media.Image"%>
@@ -7,47 +8,54 @@
 <%@page import="com.sola.instagram.auth.AccessToken"%>
 <%@page import="com.liferay.portal.util.PortalUtil"%>
 <%@page import="com.sola.instagram.auth.InstagramAuthentication"%>
-<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<portlet:defineObjects />
+<%@ include file="/html/instagramintegration/init.jsp" %>
 
-This is the <b>Instagram Integration</b> portlet in View mode.
-<br>
-<portlet:actionURL var="actionURL">
-	<portlet:param name="mvcPath" value="/edit.jsp"/>
-</portlet:actionURL>
 
-<a href="<%=actionURL%>">click</a>
+<%
+String portletId = (String)renderRequest.getAttribute(
+		WebKeys.PORTLET_ID);
 
-<br><br>
-Note:
-<ol>
-<li>add configuration in liferay-portlet.xml</li>
-<li>add url mapping xml in src folder</li>
-<li>configure url mapping</li>
-</ol>
+if(portletId==null){
+	portletId = ParamUtil.getString(renderRequest, "portletResource");
+}
+Portlet portlet = PortletLocalServiceUtil.getPortletById(portletId);
+FriendlyURLMapper friendlyURLMapper = portlet.getFriendlyURLMapperInstance();
+String redirectURL = PortalUtil.getLayoutFriendlyURL(layout, themeDisplay);
+if(friendlyURLMapper!=null){
+	redirectURL = redirectURL+"/-/"+friendlyURLMapper.getMapping();
+}
 
+
+%>
 <%
 
 String accessTokenString = portletPreferences.getValue("accessTokenString", null);
-System.out.println("accessTokenString"+accessTokenString);
 InstagramAuthentication auth = new InstagramAuthentication();
-auth.setRedirectUri("http://localhost:2020/web/guest/home/-/poc")
-.setClientSecret("7a2b367f9e8f4b01956816ef46fe3268")
-.setClientId("8548ff7a03374c48b1a78875d905f8a9")
+auth.setRedirectUri(redirectURL)
+.setClientSecret(clientSecret)
+.setClientId(clientId)
 ;
 %>
 
 <c:choose>
-	<c:when test="<%=accessTokenString==null %>">
-		<%
+	<c:when test="<%=clientId ==null || clientSecret ==null  %>">
+		<h2>You are two steps away from accessing Instagram feed around you</h2>
+		<div class="portlet-msg-info">
+			<ol>
+				<li>Configure client id and secret of Instagram client</li>
+				<li>Login with Instagram Account</li>
+			</ol>
 		
-
-			
+		</div>
+	</c:when>
+	<c:when test="<%=accessTokenString==null %>">
+		<h2>You are one step away from accessing Instagram feed around you</h2>
+		
+		<%
 			String authUrl = auth.getAuthorizationUri();
-			
 		%>
-		<a href="<%=authUrl%>">Authorize</a>
+		<aui:a href="<%=authUrl%>"><aui:button value="Login with Instagram Account" type="submit"></aui:button></aui:a>
+		
 	</c:when>
 	<c:otherwise>
 		<%
@@ -55,19 +63,39 @@ auth.setRedirectUri("http://localhost:2020/web/guest/home/-/poc")
 		InstagramSession instaSession = new InstagramSession(auth.getAccessToken());
 		List<Media> feed= instaSession.searchMedia(Geobytes.get("Latitude"), Geobytes.get("Longitude"), null, null, 5000);
 		/* PaginatedCollection<Media> feed = instaSession.getRecentPublishedMedia(auth.getAuthenticatedUser().getId());  */
+		%>
+		<div id="myGallery">
+		
+		<%
 		for(Media media: feed) {
-			  Image image = media.getStandardResolutionImage();
-			  
-		    //do stuff
+			  Image fullImage = media.getStandardResolutionImage();
+			  Image thumbnailImage= media.getThumbnailImage();
 			  %>	  
-			 <%=media.getUser().getUserName() %>
-			 <%=media.getComments() %>
-			<img src="<%=image.getUri()%>"></img><br>
+			
+			 <a href="<%=fullImage.getUri() %>" title='<%=media.getCaption()!=null?media.getCaption().getText():""%>'>
+   				 <img class="picture" src="<%=thumbnailImage.getUri() %>" />
+  			</a>
+
+			
 		<%  }
 		%>
+		</div>
 	</c:otherwise>
 </c:choose>
-
-
-
-
+<script type="text/javascript">
+YUI().use(
+		  'aui-image-viewer-gallery',
+		  function(Y) {
+		    new Y.ImageGallery(
+		      {
+		        caption: 'Feed around you',
+		        delay: 2000,
+		        links: '#myGallery a',
+		        pagination: {
+		          total: 5
+		        }
+		      }
+		    ).render();
+		  }
+		);
+</script>

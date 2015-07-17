@@ -6,6 +6,7 @@
 	<portlet>
 		<portlet-name>instagram-integration</portlet-name>
 		<icon>/icon.png</icon>
+		<configuration-action-class>com.poc.InstagramIntegrationPortletConfiguration</configuration-action-class>
 		<friendly-url-mapper-class>com.liferay.portal.kernel.portlet.DefaultFriendlyURLMapper</friendly-url-mapper-class>
 		<friendly-url-mapping>poc</friendly-url-mapping>
 		<friendly-url-routes>com/poc/url-mapping/poc-friendly-url-routes.xml</friendly-url-routes>
