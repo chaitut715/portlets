@@ -1,4 +1,5 @@
 
+<%@page import="com.liferay.portal.kernel.util.Validator"%>
 <%@page import="com.smartechz.tools.mygeoloc.Geobytes"%>
 <%@page import="com.sola.instagram.util.PaginatedCollection"%>
 <%@page import="com.sola.instagram.model.Media.Image"%>
@@ -70,14 +71,19 @@ auth.setRedirectUri(redirectURL)
 		for(Media media: feed) {
 			  Image fullImage = media.getStandardResolutionImage();
 			  Image thumbnailImage= media.getThumbnailImage();
-			  %>	  
+			  //System.out.println("userid:"+media.getUser().getId()+"   username:"+media.getUser().getUserName()+"Full Name:"+media.getUser().getFullName());
+			  String profileLinkName = Validator.isNotNull(media.getUser().getFullName())?media.getUser().getFullName():media.getUser().getUserName();
+			  String userProfileURL = "&lt;a href=\"http:&#47;&#47;instagram.com&#47;"+media.getUser().getUserName()+"\"&gt;"+profileLinkName+"&lt;&#47;a&gt;&nbsp;&nbsp;";
+				  %>	  
 			
-			 <a href="<%=fullImage.getUri() %>" title='<%=media.getCaption()!=null?media.getCaption().getText():""%>'>
+			
+			 <a href="<%=fullImage.getUri() %>" title='<%=media.getCaption()!=null?userProfileURL+media.getCaption().getText():userProfileURL%>'>
    				 <img class="picture" src="<%=thumbnailImage.getUri() %>" />
   			</a>
 
 			
-		<%  }
+		<%  
+		}
 		%>
 		</div>
 	</c:otherwise>
